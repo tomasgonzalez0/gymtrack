@@ -1,0 +1,23 @@
+import { eq } from "drizzle-orm";
+import type { Database } from "./client";
+import { exercises, routineDays, routineExercises, routines, trainerLinks, users } from "./schema";
+type SeedExercise={name:string;group:typeof exercises.$inferInsert.muscleGroup;equipment:typeof exercises.$inferInsert.equipment;increment:string};
+const raw:[string,SeedExercise["group"],SeedExercise["equipment"],string][]=[
+ ["Press de banca con barra","chest","barbell","2.5"],["Press inclinado con mancuernas","chest","dumbbell","2"],["Aperturas con mancuernas","chest","dumbbell","1"],["Press en máquina de pecho","chest","machine","2.5"],["Cruce de poleas","chest","cable","2.5"],["Flexiones","chest","bodyweight","0"],
+ ["Jalón al pecho","back","cable","2.5"],["Remo con barra","back","barbell","2.5"],["Remo en polea baja","back","cable","2.5"],["Remo con mancuerna a una mano","back","dumbbell","2"],["Dominadas asistidas","back","machine","2.5"],
+ ["Press militar con mancuernas","shoulders","dumbbell","2"],["Elevaciones laterales","shoulders","dumbbell","1"],["Face pull","shoulders","cable","2.5"],["Elevaciones posteriores","shoulders","dumbbell","1"],
+ ["Curl con mancuernas","biceps","dumbbell","1"],["Curl martillo","biceps","dumbbell","1"],["Curl con barra Z","biceps","barbell","2.5"],["Extensión de tríceps en polea","triceps","cable","2.5"],["Press francés","triceps","barbell","2.5"],["Patada de tríceps","triceps","dumbbell","1"],
+ ["Sentadilla con barra","quads","barbell","5"],["Sentadilla goblet","quads","dumbbell","2"],["Prensa de piernas","quads","machine","5"],["Zancadas con mancuernas","quads","dumbbell","2"],["Sentadilla búlgara","quads","dumbbell","2"],["Extensión de cuádriceps","quads","machine","2.5"],["Curl femoral","hamstrings","machine","2.5"],["Peso muerto rumano","hamstrings","barbell","2.5"],["Peso muerto rumano con mancuernas","hamstrings","dumbbell","2"],["Hip thrust con barra","glutes","barbell","5"],["Puente de glúteo","glutes","bodyweight","0"],["Abducción en máquina","glutes","machine","2.5"],["Patada de glúteo en polea","glutes","cable","2.5"],["Elevación de talones","calves","machine","5"],
+ ["Crunch en polea","abs","cable","2.5"],["Elevación de piernas colgado","abs","bodyweight","0"],["Crunch abdominal","abs","bodyweight","0"],["Farmer walk con kettlebell","full_body","kettlebell","2"]
+];
+export const seedExercises:SeedExercise[]=raw.map(([name,group,equipment,increment])=>({name,group,equipment,increment}));
+export function slugify(value:string){return value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"")}
+export async function seedDatabase(db:Database){
+ const adminEmail=(process.env.SEED_ADMIN_EMAIL??"tomasgz2006@gmail.com").toLowerCase(); const athleteEmail=(process.env.SEED_ATHLETE_EMAIL??"ivannacc07@gmail.com").toLowerCase();
+ await db.insert(users).values([{email:adminEmail,name:"Tomás",role:"admin"},{email:athleteEmail,name:"Ivanna",role:"athlete"}]).onConflictDoNothing({target:users.email});
+ const [admin]=await db.select().from(users).where(eq(users.email,adminEmail)); const [athlete]=await db.select().from(users).where(eq(users.email,athleteEmail)); if(!admin||!athlete) throw new Error("No fue posible crear usuarios seed");
+ await db.insert(trainerLinks).values({trainerId:admin.id,athleteId:athlete.id,status:"active",requestedBy:admin.id,respondedAt:new Date()}).onConflictDoNothing();
+ for(const item of seedExercises) await db.insert(exercises).values({name:item.name,slug:slugify(item.name),muscleGroup:item.group,equipment:item.equipment,defaultIncrementKg:item.increment,createdBy:admin.id,instructions:`Realiza ${item.name.toLowerCase()} con control y rango cómodo.`,techniqueCues:["Mantén una postura estable","Controla la fase excéntrica","Respira sin perder tensión"],commonMistakes:["Usar impulso","Perder la postura"]}).onConflictDoNothing({target:exercises.slug});
+ const existing=await db.select().from(routines).where(eq(routines.name,"Full body A (ejemplo)")); if(existing.length===0){const [routine]=await db.insert(routines).values({athleteId:athlete.id,createdBy:admin.id,name:"Full body A (ejemplo)",goal:"Fuerza general",isActive:false}).returning(); if(routine){const [day]=await db.insert(routineDays).values({routineId:routine.id,name:"Día A",position:0}).returning(); const chosen=await db.select().from(exercises).limit(5); if(day) for(const [position,exercise] of chosen.entries()) await db.insert(routineExercises).values({dayId:day.id,exerciseId:exercise.id,position,sets:3,repMin:8,repMax:12,restSeconds:90,mode:"progressive"});}}
+ return {users:2,exercises:seedExercises.length};
+}
