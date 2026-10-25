@@ -12,6 +12,6 @@
 | M6 Progresión | completado | 2026-10-25 | 21 pruebas de métricas/progresión | Increase/decrease/hold, e1RM, volumen y calentamientos |
 | M7 Progreso/Entrenador | completado | 2026-10-25 | Build; health y smoke compilados | Gráficas, historial, dashboard y diagnóstico |
 | M8 PWA/Pulido | completado | 2026-10-25 | `test:all` verde; `npm audit --omit=dev`: 0 | Manifest/SW, responsive, a11y, CSP y headers |
-| C. QA | pendiente | | | |
+| C. QA | FAIL (ciclo 1/3) | 2026-10-25 | Instalación limpia temporal; lint/typecheck/39 tests/build/2 E2E verdes; auditoría IDOR, seguridad, costo y exploratorio | 3 S1 + 3 S2 abiertos; ver `QA_REPORT.md`; no desplegar |
 | D. Despliegue | pendiente | | | |
 | E. Verificación final | pendiente | | | |

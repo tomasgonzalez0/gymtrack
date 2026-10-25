@@ -13,3 +13,4 @@
 - D-011 Los PR se recalculan de forma idempotente al editar series dentro de 24 horas; los registros derivados de la sesión se reemplazan en una transacción para evitar récords obsoletos.
 - D-012 P1 solo se inicia tras QA P0 en PASS; BR-P7 y BR-V2 quedan trazados en el backlog P1, mientras P2 aparece únicamente como roadmap en README.
 - D-013 Los íconos PWA se sirven como SVG vectorial con tamaños declarados 192/512 y propósito maskable; evita binarios opacos y no consume optimización de imágenes de Vercel.
+- D-014 QA ejecuta la instalación limpia en un clon temporal fuera de `Documents` porque Windows bloqueó repetidamente directorios de npm con `ENOTEMPTY`/`EPERM`; el clon usa el mismo commit y separa el fallo ambiental del producto.
