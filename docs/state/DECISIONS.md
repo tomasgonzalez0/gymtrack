@@ -12,3 +12,4 @@
 - D-010 El service worker cacheará únicamente shell/activos versionados y nunca respuestas de rutas autenticadas ni API; el borrador de sesión en `localStorage` será una ayuda de recuperación y la BD seguirá siendo la fuente de verdad.
 - D-011 Los PR se recalculan de forma idempotente al editar series dentro de 24 horas; los registros derivados de la sesión se reemplazan en una transacción para evitar récords obsoletos.
 - D-012 P1 solo se inicia tras QA P0 en PASS; BR-P7 y BR-V2 quedan trazados en el backlog P1, mientras P2 aparece únicamente como roadmap en README.
+- D-013 Los íconos PWA se sirven como SVG vectorial con tamaños declarados 192/512 y propósito maskable; evita binarios opacos y no consume optimización de imágenes de Vercel.
