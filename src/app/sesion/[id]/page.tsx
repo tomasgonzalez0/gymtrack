@@ -1,0 +1,1 @@
+import{AppShell}from"@/components/app-shell";import{PageTitle}from"@/components/page-title";import{SessionTracker}from"@/components/session/session-tracker";export default function Session(){return <AppShell><PageTitle eyebrow="SESIÓN EN CURSO" title="Día A"><p>Tu borrador se conserva si recargas.</p></PageTitle><SessionTracker/></AppShell>}
