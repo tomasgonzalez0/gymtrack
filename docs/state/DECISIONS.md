@@ -2,3 +2,13 @@
 - D-000 Contentful NO es CMS de rutinas; solo almacén de imágenes/GIFs. Rutinas y biblioteca viven en Neon con dashboard de entrenador.
 - D-001 Progresión por defecto: 1 sesión (configurable 1–3 por ejercicio). Técnica por autoevaluación (cámara = P2).
 - D-002 Registro cerrado por allowlist; roles athlete/trainer/admin; Tomás = admin, su pareja = atleta vinculada.
+- D-003 Se fija Next.js `16.4.3` con React `19.3.1` y Node `>=20.9`; son versiones estables actuales, compatibles entre sí y mantienen App Router.
+- D-004 Se fija Auth.js/`next-auth` `5.0.0-beta.32` de forma exacta: la arquitectura exige v5, pero a 2026-10-25 sigue en el canal beta; no se aceptarán actualizaciones automáticas y sus callbacks se cubrirán con pruebas.
+- D-005 Se fija Vitest `4.1.12`, no la última rama 5: v4 conserva soporte para Node 20 y cumple el requisito Node >=20 del proyecto; v5 exige Node >=22.12.
+- D-006 Los ejercicios sembrados suman 39, por encima del mínimo aproximado de 35; se sembrarán los 39 de `docs/04-data-model.md` sin recortar la fuente de verdad.
+- D-007 Para `trainer_links`, una solicitud iniciada por atleta se interpreta como invitación al usuario entrenador indicado; el par siempre se almacena con `trainer_id` apuntando a un rol trainer/admin y los errores por email son neutrales.
+- D-008 El login E2E no compartirá código de confianza con Google: el proveedor Credentials solo existirá con `E2E_TEST_MODE=true` y sin `VERCEL`, usando identidades fixture separadas; producción fallará al arrancar si se intenta habilitarlo.
+- D-009 Las pruebas de integración usarán PGlite y aplicarán las migraciones SQL generadas por Drizzle; esto valida las mismas restricciones que producción sin crear recursos externos.
+- D-010 El service worker cacheará únicamente shell/activos versionados y nunca respuestas de rutas autenticadas ni API; el borrador de sesión en `localStorage` será una ayuda de recuperación y la BD seguirá siendo la fuente de verdad.
+- D-011 Los PR se recalculan de forma idempotente al editar series dentro de 24 horas; los registros derivados de la sesión se reemplazan en una transacción para evitar récords obsoletos.
+- D-012 P1 solo se inicia tras QA P0 en PASS; BR-P7 y BR-V2 quedan trazados en el backlog P1, mientras P2 aparece únicamente como roadmap en README.

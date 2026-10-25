@@ -2,7 +2,7 @@
 
 | Fase/Hito | Estado | Fecha | Evidencia (comandos verdes) | Notas |
 |---|---|---|---|---|
-| A. Plan | pendiente | | | |
+| A. Plan | completado | 2026-10-25 | Fuentes leídas; versiones verificadas con `npm view`; matrices BR/AC con cobertura P0 100 % | Plan M0–M10 en `docs/state/PLAN.md`; P1 condicionado y P2 solo roadmap |
 | M0 Scaffold | pendiente | | | |
 | M1 BD | pendiente | | | |
 | M2 Auth/Authz | pendiente | | | |
