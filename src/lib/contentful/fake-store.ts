@@ -1,0 +1,2 @@
+import type {AssetStore,StoredAsset,UploadInput} from "./asset-store";
+export class FakeAssetStore implements AssetStore{private assets=new Map<string,StoredAsset>();async upload(input:UploadInput){const id=`fake-${this.assets.size+1}`;const asset={id,url:`https://images.ctfassets.net/fake/${id}/${encodeURIComponent(input.fileName)}`,width:640,height:640,sizeBytes:input.bytes.byteLength};this.assets.set(id,asset);return asset}async delete(id:string){this.assets.delete(id)}count(){return this.assets.size}}
