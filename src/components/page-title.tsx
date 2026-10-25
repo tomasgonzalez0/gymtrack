@@ -1,0 +1,1 @@
+export function PageTitle({eyebrow,title,children}:{eyebrow:string;title:string;children?:React.ReactNode}){return <header style={{marginBottom:"1.5rem"}}><span className="pill">{eyebrow}</span><h1 style={{fontSize:"clamp(2rem,7vw,3.6rem)",lineHeight:1.05,marginBlock:".7rem"}}>{title}</h1>{children&&<div className="muted" style={{maxWidth:650}}>{children}</div>}</header>}
