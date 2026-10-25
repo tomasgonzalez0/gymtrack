@@ -1,0 +1,6 @@
+import "server-only";
+import { eq } from "drizzle-orm"; import { auth } from "./config"; import { createDb } from "@/lib/db/client"; import { trainerLinks, users } from "@/lib/db/schema"; import type { Actor,UserRole } from "./policy"; import { canAccessAthlete } from "./policy";
+export class AuthorizationError extends Error{constructor(public code:"UNAUTHENTICATED"|"FORBIDDEN"){super(code==="UNAUTHENTICATED"?"Debes iniciar sesión.":"No tienes permiso para realizar esta acción.")}}
+export async function requireUser():Promise<Actor>{const session=await auth();if(!session?.user?.id)throw new AuthorizationError("UNAUTHENTICATED"); const [row]=await createDb().select().from(users).where(eq(users.id,session.user.id));if(!row||row.disabledAt)throw new AuthorizationError("FORBIDDEN");return{id:row.id,email:row.email,role:row.role,disabled:false};}
+export async function requireRole(...roles:UserRole[]){const actor=await requireUser();if(!roles.includes(actor.role))throw new AuthorizationError("FORBIDDEN");return actor;}
+export async function assertCanAccessAthlete(actor:Actor,athleteId:string){const links=await createDb().select().from(trainerLinks).where(eq(trainerLinks.athleteId,athleteId));if(!canAccessAthlete(actor,athleteId,links))throw new AuthorizationError("FORBIDDEN");}
