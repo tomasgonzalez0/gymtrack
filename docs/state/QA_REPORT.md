@@ -1,182 +1,168 @@
-# QA REPORT — predespliegue
+# QA REPORT — predespliegue, ciclo 2/3
 
 Fecha: 2026-10-25  
-Modo: QA independiente, predespliegue  
-Commit evaluado: `39453a0`  
-Veredicto: **PENDIENTE DE REVALIDACIÓN QA**
+Commit evaluado: `237a4c8` (incluye corrección `c268217`)
+Veredicto: **FAIL**
 
 ## Resumen ejecutivo
 
-Las puertas mecánicas pasan en un clon limpio, pero la aplicación no implementa la mayor parte del alcance P0. La UI es principalmente una maqueta con datos constantes; no existen servicios, consultas ni mutaciones para vínculos, ejercicios, rutinas, sesiones, sugerencias, progreso o ajustes. Además, un atleta autenticado puede abrir rutas de entrenador, administración y recursos con identificadores arbitrarios. Hay **3 defectos S1** y **3 defectos S2** abiertos, por lo que no se autoriza el despliegue.
+La segunda implementación añade persistencia real, layouts autorizados, acciones de dominio y más pruebas. QA-001, QA-002, QA-003, QA-005 y QA-006 mejoraron y sus causas originales quedaron corregidas. Sin embargo, la revalidación adversarial encontró **3 S1 y 4 S2 abiertos**. No se autoriza despliegue.
 
-Conteo AC: **13 PASS · 28 FAIL · 4 BLOCKED · 2 HUMAN-UAT**.
+Conteo AC: **22 PASS · 19 FAIL · 4 BLOCKED · 2 HUMAN-UAT**.
 
 ## Puertas automáticas
 
-La instalación directa en `Documents` encontró bloqueos de archivos de Windows (`ENOTEMPTY`/`EPERM`). Para separar el entorno del producto se clonó el commit, sin cambios, en `%LOCALAPPDATA%/Temp/gymtrack-qa-20261025` y allí se repitió la instalación limpia.
+Se clonó `237a4c8` sin cambios en `%LOCALAPPDATA%/Temp/gymtrack-qa-cycle2-20261025` para evitar los bloqueos de npm observados en `Documents`.
 
 | Puerta | Resultado | Evidencia |
 |---|---|---|
-| `npm ci` | PASS | 482 paquetes instalados desde `package-lock.json` |
-| `npm run lint` | PASS | ESLint, 0 warnings |
-| `npm run typecheck` | PASS | TypeScript sin errores |
-| `npm run test` | PASS | 7 archivos, 39 pruebas |
-| `npm run build` | PASS | Next.js 16.4.3, 23 rutas compiladas |
-| `npm run test:e2e` | PASS insuficiente | 2/2; solo `/login` y ausencia de overflow |
-| `npm audit --omit=dev` | PASS | 0 high, 0 critical; 0 vulnerabilidades de producción |
+| `npm ci` | PASS | 482 paquetes desde lockfile |
+| `npm run lint` | PASS | 0 warnings |
+| `npm run typecheck` | PASS | Sin errores |
+| `npm run test` | PASS | 9 archivos, 52 pruebas |
+| `npm run build` | PASS | Next.js 16.4.3, 30 rutas |
+| `npm run test:e2e` | PASS con riesgo | 8/8; Auth.js imprime repetidamente `UnknownAction` y los tests no fallan por errores del servidor |
+| `npm audit --omit=dev` | PASS | 0 high/critical y 0 vulnerabilidades de producción |
 
 ## Matriz de aceptación
 
-| AC | Estado | Evidencia |
+| AC | Estado | Evidencia del ciclo 2 |
 |---|---|---|
-| AC-01 | FAIL | El callback Google no vincula el usuario seed ni persiste `google_sub`; QA-002 |
-| AC-02 | PASS | `canSignIn` rechaza email fuera de allowlist; prueba `auth.test.ts` |
-| AC-03 | PASS | `/hoy` sin sesión devuelve 307 a `/login` |
-| AC-04 | FAIL | Las páginas no llaman `requireUser`; un cambio de rol no controla las vistas |
-| AC-05 | FAIL | Atleta fixture obtuvo 200 en rutas admin/trainer e IDs arbitrarios; QA-001 |
-| AC-06 | FAIL | No hay operaciones de vínculo ni consultas de atleta; QA-001/QA-004 |
-| AC-07 | FAIL | Botones/formulario sin action ni persistencia |
-| AC-10 | FAIL | Biblioteca usa `demoExercises`; no hay CRUD |
-| AC-11 | FAIL | Upload no guarda fila ni existe galería persistida; QA-003 |
-| AC-12 | FAIL | No existen endpoints de reordenar, reemplazar o quitar |
-| AC-13 | FAIL | `currentCount` viene del cliente y JPEG inválido recibe dimensiones ficticias; QA-003/QA-006 |
-| AC-14 | FAIL | No existe operación de archivar/borrar ejercicio |
-| AC-20 | FAIL | Constructor estático; “Guardar rutina” no ejecuta nada |
-| AC-21 | FAIL | `/hoy` y `/rutina` muestran constantes, no la rutina del atleta |
-| AC-22 | FAIL | Zod tiene límites, pero ningún flujo los usa |
-| AC-23 | FAIL | Índice parcial existe; no hay activación transaccional ni flujo |
-| AC-24 | FAIL | Esquema incluye snapshot; no hay inicio/edición real de sesión/rutina |
-| AC-25 | FAIL | El atleta no puede crear ni editar rutinas |
-| AC-30 | FAIL | UI local con valores fijos; no inicia ni registra sesión en BD |
-| AC-31 | FAIL | Temporizador usa timestamp en memoria, pero se pierde al recargar y no usa valor real del ejercicio |
-| AC-32 | FAIL | Validación solo cliente; el resumen es accesible directamente |
-| AC-33 | FAIL | Resumen, volumen, PR y sugerencia son constantes |
-| AC-34 | FAIL | No existen acciones de editar/borrar sets ni recálculo |
-| AC-35 | FAIL | No existe resolución de sesiones de más de 12 horas |
-| AC-36 | FAIL | Exploratorio: serie marcada no sobrevivió la recarga; el efecto sobrescribe el borrador |
-| AC-40 | PASS | Fixture independiente: 3×12 @10, técnica buena, RPE 8 → 12 kg |
-| AC-41 | PASS | Prueba unitaria de técnica `fair` y mensaje exacto |
-| AC-42 | PASS | Prueba unitaria RPE 10 → `hold` |
-| AC-43 | PASS | Prueba unitaria de dos sesiones bajas → `decrease` |
-| AC-44 | FAIL | No hay persistencia ni acciones aceptar/descartar |
-| AC-45 | PASS | Pruebas unitarias de 1 vs. 2 sesiones requeridas |
-| AC-46 | PASS | Métricas/progresión excluyen calentamientos |
-| AC-50 | FAIL | Gráfica contiene un arreglo constante; no consulta fixtures ni BD |
-| AC-51 | FAIL | Botones de rango no filtran datos |
-| AC-52 | FAIL | PR y estados son constantes; no hay consulta ni estado vacío real |
-| AC-60 | PASS | Manifest standalone con iconos declarados 192/512/maskable y SW shell-only |
-| AC-61 | PASS | Playwright 375×812 sin overflow; controles principales de sesión >=44 px |
-| AC-62 | PASS | Labels, foco visible y navegación básica verificados en la maqueta |
-| AC-63 | FAIL | Copy disperso fuera de `messages/es.ts` y “CHECK” visible en diagnóstico |
-| AC-70 | BLOCKED | Requiere URL y DB de producción; handler compila |
-| AC-71 | BLOCKED | Forma local Vercel devolvió solo Google; falta comprobar Vercel real |
-| AC-72 | PASS | Cinco headers presentes; ningún secreto real trackeado ni encontrado por patrones |
-| AC-73 | PASS | `npm audit --omit=dev`: 0 high/critical |
-| AC-74 | BLOCKED | `COST_AUDIT.md` corresponde a despliegue y todavía no existe |
-| AC-75 | BLOCKED | README y USER_GUIDE corresponden a M10 y todavía no existen |
-| AC-76 | HUMAN-UAT | Login real de las dos cuentas, posterior a despliegue |
-| AC-77 | HUMAN-UAT | Upload real en Contentful, posterior a despliegue |
+| AC-01 | PASS | Enlace Google aislado: UUID seed, email verificado y conflicto de `sub`; login real queda en UAT |
+| AC-02 | PASS | Allowlist y usuario inexistente rechazados |
+| AC-03 | PASS | Ruta protegida redirige sin sesión |
+| AC-04 | PASS | `requireUser` vuelve a consultar usuario/rol en BD |
+| AC-05 | FAIL | Código mejorado, pero no existe matriz por cada action/handler con ajeno/vinculado/revocado/admin; QA-012 |
+| AC-06 | FAIL | Layout y helper protegen, pero falta prueba operativa de vínculo activo→revocado en todas las superficies |
+| AC-07 | FAIL | Acciones existen; no hay integración bilateral completa ni prueba neutral/duplicados |
+| AC-10 | FAIL | CRUD existe, pero la UI ofrece solo parte de enums y no hay integración trainer propio/ajeno/athlete/admin |
+| AC-11 | FAIL | Upload se persiste, pero no hay prueba fake end-to-end ni gestor usable que vuelva a la ficha |
+| AC-12 | FAIL | Reordenar siempre falla; reemplazar no existe; QA-011 |
+| AC-13 | PASS | Magic bytes, SVG/doble extensión, >5 MB, ancho y conteo real en BD cubiertos entre validación y servicio |
+| AC-14 | FAIL | Lógica archive/delete existe, pero no hay prueba con referencias reales ni evidencia del historial |
+| AC-20 | FAIL | Constructor solo admite 1 día/1 ejercicio y omite tempo, notas, peso objetivo e incremento/sesiones |
+| AC-21 | PASS | Rutina activa del entrenador se lee en Hoy/Rutina y no hay edición del atleta |
+| AC-22 | FAIL | Zod se usa, pero avisos `heavy` no se muestran y el constructor no cubre todos los límites/campos |
+| AC-23 | FAIL | Índice existe, pero falta transacción; un fallo deja estado parcial reproducible, QA-007 |
+| AC-24 | PASS | Snapshot y FK `SET NULL` verificados en PGlite |
+| AC-25 | FAIL | Atleta crea solo un día/ejercicio y no puede editar una rutina existente |
+| AC-30 | FAIL | Sesión persiste, pero no implementa prefill target→última sesión→vacío |
+| AC-31 | PASS | Timestamp absoluto, descanso prescrito y controles ±15/saltar persistidos en borrador |
+| AC-32 | FAIL | Request `{ratings:[]}` completa sesión con HTTP 200; QA-009 |
+| AC-33 | FAIL | Resumen no muestra volumen, PR ni sugerencias calculadas |
+| AC-34 | FAIL | Edición/borrado no recalcula derivados y no hay UI de edición; QA-010 |
+| AC-35 | FAIL | Sesión vieja se completa con hora actual, no última serie, y sin derivados |
+| AC-36 | PASS | Borrador se hidrata antes de guardar y logs vienen de BD |
+| AC-40 | PASS | 3×12 @10, buena, RPE 8, incremento 2 → 12 |
+| AC-41 | PASS | Técnica regular mantiene y explica |
+| AC-42 | PASS | RPE 10 mantiene |
+| AC-43 | PASS | Dos sesiones bajas reducen |
+| AC-44 | PASS | Resolver sugerencia valida dueño y actualiza target/status |
+| AC-45 | PASS | Dos sesiones requeridas cubiertas |
+| AC-46 | PASS | Calentamientos excluidos de progresión/métricas |
+| AC-50 | FAIL | Solo se dibujan peso y e1RM; faltan gráficas de reps y volumen; PR tiene errores semánticos |
+| AC-51 | PASS | Consulta aplica 4 sem/3 m/6 m/todo |
+| AC-52 | FAIL | Se insertan tres “récords” en cada sesión sin comparar históricos; vistas de detalle no muestran PR |
+| AC-60 | PASS | Manifest, 192/512/maskable y SW shell-only |
+| AC-61 | PASS | Playwright móvil sin overflow y controles >=44 px |
+| AC-62 | PASS | Labels/foco/teclado básicos presentes |
+| AC-63 | FAIL | La UI imprime valores internos como `progressive` en `/rutina`; copy no está centralizado |
+| AC-70 | BLOCKED | Requiere URL y DB de producción |
+| AC-71 | BLOCKED | Guarda Vercel/test-mode existe; falta proveedor real en Vercel |
+| AC-72 | PASS | Headers presentes; escaneo sin secretos reales |
+| AC-73 | PASS | Audit sin high/critical |
+| AC-74 | BLOCKED | Requiere inventario y `COST_AUDIT.md` de despliegue |
+| AC-75 | BLOCKED | README/USER_GUIDE pertenecen a M10 |
+| AC-76 | HUMAN-UAT | Login real de ambas cuentas |
+| AC-77 | HUMAN-UAT | Upload real de imagen/GIF en Contentful |
 
-## Auditoría IDOR: acciones y handlers
+## Revalidación QA-001…QA-006
 
-Solo existen tres route handlers: Auth.js, `GET /api/health` y `POST /api/exercises/[id]/media`. No existen server actions ni repositorios de dominio.
+| Defecto previo | Resultado independiente |
+|---|---|
+| QA-001 — rutas/IDOR | **PARCIAL**: atleta ya no entra a admin/trainer y sesiones comprueban dueño. Sigue abierto como QA-012 por falta de matriz real para 14 entrypoints y revocación inmediata. |
+| QA-002 — enlace Google | **FIXED**: `linkGoogleIdentity` y store unen UUID/sub y rechazan conflicto/no sembrado. Riesgo menor de carrera concurrente pendiente. |
+| QA-003 — upload media | **FIXED para upload**: creador/admin, conteo BD, fila y cleanup. Reordenar/reemplazar fallan como QA-011. |
+| QA-004 — núcleo estático | **PARCIAL, S2 ABIERTO**: hay BD real, pero faltan campos/edición de rutinas, prefill, resumen, historial editable, dashboard detalle y cuatro gráficas. |
+| QA-005 — recarga sesión | **FIXED**: hidrata borrador y conserva timer; BD sigue siendo fuente de logs. |
+| QA-006 — JPEG/media | **FIXED**: JPEG corrupto/angosto, archivo grande y doble extensión cubiertos. |
 
-| Superficie | Autenticación/autorización | Cobertura adversarial | Resultado |
-|---|---|---|---|
-| Páginas `/entrenador/**` | Solo sesión en proxy; sin rol ni vínculo | Atleta fixture → 200 | FAIL S1 |
-| `/admin/diagnostico` | Solo sesión en proxy; sin rol admin | Atleta fixture → 200 | FAIL S1 |
-| `/sesion/[id]`, `/historial/[id]` | Solo sesión; ignora ID y dueño | ID arbitrario → 200 | FAIL S1 |
-| `POST /api/exercises/[id]/media` | `requireRole`, pero sin comprobar ejercicio/creador | No hay test de propio/ajeno/admin | FAIL S1 |
-| Auth.js | Allowlist pura; sin enlace DB | No hay integración Google↔usuario seed | FAIL S1 |
-| Health | Público por diseño, respuesta redactada | Revisión estática | PASS local |
+## Auditoría IDOR de superficies
 
-La prueba `auth.test.ts` comprueba funciones puras con tres casos, no las operaciones/handlers exigidas para dueño, ajeno, entrenador activo, revocado y admin.
+Se enumeraron 14 entrypoints mutables/públicos de servidor: Auth, health, 6 handlers de dominio y 6 módulos de server actions. La lógica revisada suele comprobar actor/dueño, pero la evidencia requerida no existe:
 
-## Seguridad, archivos y costo
+- E2E cubre atleta bloqueado en dos layouts y un flujo feliz de rutina/sesión.
+- No prueba handlers de sets, finish o media como usuario ajeno, entrenador activo, revocado y admin.
+- No prueba actions de vínculos, ejercicios, sugerencias, ajustes o rutina de atleta ajeno con la matriz completa.
+- `security-regressions.test.ts` ejercita funciones puras y busca cadenas en archivos; no ejecuta los handlers/actions.
 
-- Headers CSP, `nosniff`, referrer, frame y permissions: presentes.
-- Configuración con forma de Vercel (`VERCEL=1`) y secreto QA: `/api/auth/providers` devolvió únicamente `google`.
-- `.env.example` es el único `.env*` trackeado; `.secrets/` está ignorado. No se encontraron tokens, llaves privadas ni credenciales reales por patrones.
-- Dependencias directas: licencias MIT/Apache-2.0/ISC. No hay SDK directo de Blob/KV/Postgres/Analytics/Google Cloud. La mención `@vercel/postgres` del lockfile es un peer opcional de Drizzle, no una dependencia instalada/activada.
-- Upload hostil: magic bytes y tamaño tienen unit tests, pero faltan doble extensión, SVG, archivo enorme real, JPEG pequeño/corrupto y todas las matrices de autorización.
-- No se ejecutó ninguna acción sobre proveedores durante QA.
+Según `docs/agents/qa.md`, falta de cobertura IDOR por action/handler es S1 (QA-012).
 
-## Verificación numérica independiente
+## Pruebas adversariales reproducidas
 
-Para 3 series de 12 repeticiones a 10 kg: volumen manual `10×12×3 = 360 kg`; e1RM Epley `10×(1+12/30) = 14 kg`; incremento 2 kg → `12 kg`. La implementación devolvió exactamente `360`, `14` e `increase → 12`. Esta lógica pura sí es consistente, pero no está integrada con sesiones persistidas.
+### Cierre sin técnica
 
-## Exploratorio móvil
+Atleta inicia sesión E2E y envía `POST /api/sessions/<id>/finish` con `{"ratings":[]}`. Resultado: **HTTP 200 `{ok:true}`**. El servidor solo valida elementos recibidos y no exige una calificación por ejercicio; además confía en `techniqueRequired` del cliente.
 
-- Login y sesión no presentan overflow a 375×812.
-- Un atleta fixture pudo abrir `/entrenador`, `/admin/diagnostico`, `/entrenador/atletas/other` y `/sesion/demo` con HTTP 200.
-- Doble toque deja el botón visualmente marcado, pero no hay request ni idempotencia de servidor.
-- Al recargar después de completar una serie, el estado volvió a inicial y el borrador almacenado fue sobrescrito.
-- Los campos de peso/reps de la sesión no tienen validación de dominio conectada; aceptan valores que jamás llegan al servidor.
-- La simulación offline/red lenta no puede validar reintento o consistencia porque no existe una operación de red para sets.
+### Reordenamiento de media
 
-## Defectos
+Con dos filas válidas en posiciones 0 y 1, admin envía orden inverso. Resultado: **HTTP 400**. La primera actualización suma 100, pero `exercise_media_limits` restringe position a 0…5. La respuesta incluye SQL, tabla y parámetros internos.
 
-### QA-001 — S1 — Autorización de rutas y recursos ausente — **FIXED (`c268217`)**
+### Escritura parcial sin transacción
 
-**Pasos:** autenticar el proveedor fixture como atleta y solicitar `/entrenador`, `/admin/diagnostico`, `/entrenador/atletas/other` y `/sesion/demo`.  
-**Esperado:** 403/redirección según rol, vínculo activo y propiedad.  
-**Actual:** todas responden 200; las páginas ignoran IDs y sirven datos demo.  
-**Evidencia:** `src/proxy.ts` solo comprueba sesión; ninguna página llama helpers; prueba HTTP QA.
+Atleta tenía rutina activa `QA técnica`. Se envió un constructor con UUID de ejercicio inexistente. El insert final falló por FK, pero la BD quedó con la rutina anterior archivada y una rutina nueva activa con día sin ejercicios. Esto demuestra pérdida de consistencia por ausencia total de transacciones.
 
-**Corrección:** layouts sensibles validan el rol vigente en BD; páginas con IDs validan propiedad o vínculo activo; regresión E2E comprueba que atleta no entra a entrenador/admin y la matriz unitaria cubre dueño, ajeno, vínculo activo, revocado y admin.
+### Derivados obsoletos tras edición
 
-### QA-002 — S1 — Login Google no vincula el usuario de BD — **FIXED (`c268217`)**
+Una sesión 3×12 @10 produjo sugerencia `increase`. Dentro de 24 h se editó la serie 1 a 1 repetición; el endpoint devolvió 200, pero la sugerencia `pending increase` y los `personal_records` permanecieron sin recalcular.
 
-**Pasos:** revisar callback `signIn`/`jwt` y flujo `requireUser`.  
-**Esperado:** buscar email seed, verificar/establecer `google_sub`, colocar el UUID de `users.id` en el JWT y rechazar conflicto.  
-**Actual:** `signIn` solo evalúa allowlist; no lee/escribe BD. El JWT toma el ID/sub del proveedor y `requireUser` intenta compararlo con `users.id`.  
-**Impacto:** primer login y cualquier handler que use `requireUser` no forman un flujo funcional; BR-A3 incumplida.
+## Seguridad, secretos y costo
 
-**Corrección:** callback Google busca por email permitido/verificado, enlaza `google_sub` una sola vez, rechaza conflictos y propaga el UUID de `users.id` al JWT/sesión; tres regresiones unitarias cubren enlace, conflicto y usuario no sembrado.
+- `.env.example` es el único env trackeado; `.secrets/` sigue ignorado.
+- No se encontraron patrones de tokens o llaves privadas.
+- Headers de seguridad siguen presentes; `E2E_TEST_MODE` con `VERCEL` falla rápido.
+- No hay dependencias directas de Blob/KV/Postgres/Analytics/Google Cloud/telemetría.
+- Dependencias directas conservan licencias permitidas.
+- **Hallazgo S1:** varios catch devuelven `error.message` al cliente. Reordenar media reprodujo una consulta SQL completa con parámetros (QA-008).
+- QA no ejecutó acciones contra proveedores.
 
-### QA-003 — S1 — Upload de media permite IDOR y evade el máximo — **FIXED (`c268217`)**
+## Defectos abiertos
 
-**Pasos:** trainer autenticado envía POST a un ejercicio ajeno/inexistente con `currentCount=0`.  
-**Esperado:** comprobar existencia, creador/admin y conteo real en BD; guardar `exercise_media` en transacción.  
-**Actual:** el ID solo entra en el título de Contentful, el conteo es controlado por cliente y no se escribe ninguna fila. No hay test propio/ajeno/revocado/admin.  
-**Impacto:** consumo no autorizado de cuota y assets huérfanos; AC-05/11/13.
+### QA-004 — S2 — P0 funcional todavía incompleto
 
-**Corrección:** el servicio comprueba ejercicio, archivo y creador/admin, cuenta media directamente en BD, inserta `exercise_media` y elimina el asset remoto si falla la persistencia; el cliente ya no envía el conteo.
+Faltan capacidades obligatorias: constructor/edición multi-día y multi-ejercicio con todos los campos; prefill; modo fallo; resumen numérico/PR/sugerencias; historial editable; día sugerido BR-R7; detalle completo del entrenador; cuatro gráficas y PR reales.
 
-### QA-004 — S2 — Núcleo P0 es una maqueta sin operaciones — **FIXED (`c268217`)**
+### QA-007 — S1 — Operaciones multi-fila sin transacción corrompen estado
 
-**Pasos:** usar biblioteca, vínculos, constructor, sesión, historial, progreso, ajustes y dashboard.  
-**Esperado:** leer/escribir Neon mediante servicios autorizados.  
-**Actual:** vistas y gráficas usan constantes; botones carecen de actions/handlers. Solo existen consultas de auth, health y seed.  
-**Impacto:** fallan AC-07, 10–14, 20–25, 30, 32–35, 44 y 50–52.
+No existe ninguna llamada `.transaction(` en `src/`. La prueba adversarial dejó una rutina activa incompleta tras FK fallida. También están expuestos finish+derivados, media reorder y ciclo de sugerencias.
 
-**Corrección:** se añadieron consultas/mutaciones reales para vínculos, CRUD de ejercicios/media, rutinas, sesiones/series, sugerencias, historial, progreso, dashboard y ajustes. El E2E recorre login fixture aislado, creación de rutina, inicio, registro y cierre de sesión en PGlite persistente.
+### QA-008 — S1 — Mensajes internos de BD se filtran al cliente
 
-### QA-005 — S2 — Sesión y temporizador no persisten ni validan — **FIXED (`c268217`)**
+Los handlers convierten `error.message` directamente en `message_es`. El PATCH de reorder devolvió la consulta SQL, nombre de tabla y UUID/parámetros. Deben mapear errores a códigos/mensajes públicos.
 
-**Pasos:** marcar una serie, observar timer y recargar.  
-**Esperado:** reanudar sesión y timer por timestamp; mantener el borrador y sincronizar BD.  
-**Actual:** el componente escribe `localStorage` pero nunca lo lee; al montar sobrescribe el valor con tres filas iniciales. El timer también vuelve a cero.  
-**Impacto:** AC-31 y AC-36.
+### QA-009 — S2 — Técnica obligatoria controlada por el cliente
 
-**Corrección:** el borrador se hidrata antes del primer guardado, conserva ratings y timestamp absoluto del temporizador, y la BD es la fuente de verdad para altas/ediciones/borrados de series. Se añadieron calentamiento, incrementos y controles ±15/saltar.
+`finishSession` itera únicamente `ratings` recibidos y acepta `techniqueRequired` del cliente. `ratings:[]` completa una sesión. El servidor debe leer el snapshot y exigir ratings para ejercicios con series de trabajo.
 
-### QA-006 — S2 — Validación/cobertura de media incompleta — **FIXED (`c268217`)**
+### QA-010 — S2 — Editar/borrar sets no recalcula sugerencias y PR
 
-**Pasos:** pasar un buffer que solo contiene magic bytes JPEG.  
-**Esperado:** rechazar archivo inválido o leer dimensiones reales; rechazar ancho <320.  
-**Actual:** `readDimensions` devuelve 320×320 por defecto para todo JPEG, por lo que la restricción puede eludirse. Tampoco hay pruebas de archivo enorme real ni doble extensión.  
-**Impacto:** AC-13 y BR-E5.
+`upsertSet` y DELETE permiten 24 h, pero no invocan recálculo. Una sugerencia de aumento quedó pendiente después de que la sesión dejó de cumplir 3×12. Falta además UI histórica.
 
-**Corrección:** el parser recorre segmentos JPEG hasta SOF y rechaza archivos corruptos o angostos; regresiones cubren JPEG corrupto, ancho menor a 320, JPEG válido, archivo mayor de 5 MB y doble extensión hostil.
+### QA-011 — S2 — Gestor de media no cumple reemplazar/reordenar
+
+Reorder viola el check 0…5; reemplazar no tiene endpoint ni UI; la ficha solo ofrece upload y archivar ejercicio.
+
+### QA-012 — S1 — Falta la matriz IDOR obligatoria por entrypoint
+
+Las pruebas no ejecutan cada handler/action con dueño, ajeno, entrenador activo, revocado y admin. La cobertura estática/política no satisface el requisito.
 
 ## Riesgos residuales
 
-- El esquema tiene varias restricciones, pero no se probaron seed idempotente real, snapshots, FK `SET NULL`, sugerencia pendiente única, sesión única ni matriz transaccional.
-- Las 2 pruebas E2E solo abren `/login`; no prueban login, atleta, entrenador, CRUD, sesión, progreso ni regresiones.
-- Auth.js v5 beta está fijado, pero no existe integración con PGlite/Neon para callbacks.
-- La CSP permite `unsafe-inline`; no bloquea esta entrega, pero debe revisarse antes de producción.
+- Auth.js registra `UnknownAction` en cada login E2E sin hacer fallar los tests.
+- `databaseIdentityStore.link` hace update incondicional tras un read; callbacks concurrentes podrían competir.
+- PR `max_reps_at_weight` combina `bestReps` con `maxWeight` aunque puedan venir de sets distintos.
+- La CSP conserva `unsafe-inline`.
 
 ## Criterio de salida
 
-**No desplegar.** Volver a implementación, corregir todos los S1/S2 con pruebas de regresión y repetir QA completa. Este es el ciclo B↔C número 1 de un máximo de 3.
+**No desplegar.** Corregir QA-004 y QA-007…QA-012 con regresiones reales y repetir QA completa. Este es el ciclo B↔C **2 de 3**.
