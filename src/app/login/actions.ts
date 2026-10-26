@@ -1,0 +1,1 @@
+"use server";import{signIn}from"@/lib/auth/config";export async function testSignInAction(form:FormData){if(process.env.E2E_TEST_MODE!=="true"||process.env.VERCEL)throw new Error("Proveedor de prueba deshabilitado.");await signIn("credentials",{email:String(form.get("email")),redirectTo:"/hoy"})}
