@@ -3,7 +3,7 @@
 Fecha: 2026-10-25  
 Modo: QA independiente, predespliegue  
 Commit evaluado: `39453a0`  
-Veredicto: **FAIL**
+Veredicto: **PENDIENTE DE REVALIDACIÓN QA**
 
 ## Resumen ejecutivo
 
@@ -116,47 +116,59 @@ Para 3 series de 12 repeticiones a 10 kg: volumen manual `10×12×3 = 360 kg`; e
 
 ## Defectos
 
-### QA-001 — S1 — Autorización de rutas y recursos ausente
+### QA-001 — S1 — Autorización de rutas y recursos ausente — **FIXED (`c268217`)**
 
 **Pasos:** autenticar el proveedor fixture como atleta y solicitar `/entrenador`, `/admin/diagnostico`, `/entrenador/atletas/other` y `/sesion/demo`.  
 **Esperado:** 403/redirección según rol, vínculo activo y propiedad.  
 **Actual:** todas responden 200; las páginas ignoran IDs y sirven datos demo.  
 **Evidencia:** `src/proxy.ts` solo comprueba sesión; ninguna página llama helpers; prueba HTTP QA.
 
-### QA-002 — S1 — Login Google no vincula el usuario de BD
+**Corrección:** layouts sensibles validan el rol vigente en BD; páginas con IDs validan propiedad o vínculo activo; regresión E2E comprueba que atleta no entra a entrenador/admin y la matriz unitaria cubre dueño, ajeno, vínculo activo, revocado y admin.
+
+### QA-002 — S1 — Login Google no vincula el usuario de BD — **FIXED (`c268217`)**
 
 **Pasos:** revisar callback `signIn`/`jwt` y flujo `requireUser`.  
 **Esperado:** buscar email seed, verificar/establecer `google_sub`, colocar el UUID de `users.id` en el JWT y rechazar conflicto.  
 **Actual:** `signIn` solo evalúa allowlist; no lee/escribe BD. El JWT toma el ID/sub del proveedor y `requireUser` intenta compararlo con `users.id`.  
 **Impacto:** primer login y cualquier handler que use `requireUser` no forman un flujo funcional; BR-A3 incumplida.
 
-### QA-003 — S1 — Upload de media permite IDOR y evade el máximo
+**Corrección:** callback Google busca por email permitido/verificado, enlaza `google_sub` una sola vez, rechaza conflictos y propaga el UUID de `users.id` al JWT/sesión; tres regresiones unitarias cubren enlace, conflicto y usuario no sembrado.
+
+### QA-003 — S1 — Upload de media permite IDOR y evade el máximo — **FIXED (`c268217`)**
 
 **Pasos:** trainer autenticado envía POST a un ejercicio ajeno/inexistente con `currentCount=0`.  
 **Esperado:** comprobar existencia, creador/admin y conteo real en BD; guardar `exercise_media` en transacción.  
 **Actual:** el ID solo entra en el título de Contentful, el conteo es controlado por cliente y no se escribe ninguna fila. No hay test propio/ajeno/revocado/admin.  
 **Impacto:** consumo no autorizado de cuota y assets huérfanos; AC-05/11/13.
 
-### QA-004 — S2 — Núcleo P0 es una maqueta sin operaciones
+**Corrección:** el servicio comprueba ejercicio, archivo y creador/admin, cuenta media directamente en BD, inserta `exercise_media` y elimina el asset remoto si falla la persistencia; el cliente ya no envía el conteo.
+
+### QA-004 — S2 — Núcleo P0 es una maqueta sin operaciones — **FIXED (`c268217`)**
 
 **Pasos:** usar biblioteca, vínculos, constructor, sesión, historial, progreso, ajustes y dashboard.  
 **Esperado:** leer/escribir Neon mediante servicios autorizados.  
 **Actual:** vistas y gráficas usan constantes; botones carecen de actions/handlers. Solo existen consultas de auth, health y seed.  
 **Impacto:** fallan AC-07, 10–14, 20–25, 30, 32–35, 44 y 50–52.
 
-### QA-005 — S2 — Sesión y temporizador no persisten ni validan
+**Corrección:** se añadieron consultas/mutaciones reales para vínculos, CRUD de ejercicios/media, rutinas, sesiones/series, sugerencias, historial, progreso, dashboard y ajustes. El E2E recorre login fixture aislado, creación de rutina, inicio, registro y cierre de sesión en PGlite persistente.
+
+### QA-005 — S2 — Sesión y temporizador no persisten ni validan — **FIXED (`c268217`)**
 
 **Pasos:** marcar una serie, observar timer y recargar.  
 **Esperado:** reanudar sesión y timer por timestamp; mantener el borrador y sincronizar BD.  
 **Actual:** el componente escribe `localStorage` pero nunca lo lee; al montar sobrescribe el valor con tres filas iniciales. El timer también vuelve a cero.  
 **Impacto:** AC-31 y AC-36.
 
-### QA-006 — S2 — Validación/cobertura de media incompleta
+**Corrección:** el borrador se hidrata antes del primer guardado, conserva ratings y timestamp absoluto del temporizador, y la BD es la fuente de verdad para altas/ediciones/borrados de series. Se añadieron calentamiento, incrementos y controles ±15/saltar.
+
+### QA-006 — S2 — Validación/cobertura de media incompleta — **FIXED (`c268217`)**
 
 **Pasos:** pasar un buffer que solo contiene magic bytes JPEG.  
 **Esperado:** rechazar archivo inválido o leer dimensiones reales; rechazar ancho <320.  
 **Actual:** `readDimensions` devuelve 320×320 por defecto para todo JPEG, por lo que la restricción puede eludirse. Tampoco hay pruebas de archivo enorme real ni doble extensión.  
 **Impacto:** AC-13 y BR-E5.
+
+**Corrección:** el parser recorre segmentos JPEG hasta SOF y rechaza archivos corruptos o angostos; regresiones cubren JPEG corrupto, ancho menor a 320, JPEG válido, archivo mayor de 5 MB y doble extensión hostil.
 
 ## Riesgos residuales
 

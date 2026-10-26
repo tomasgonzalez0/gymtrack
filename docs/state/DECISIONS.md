@@ -14,3 +14,4 @@
 - D-012 P1 solo se inicia tras QA P0 en PASS; BR-P7 y BR-V2 quedan trazados en el backlog P1, mientras P2 aparece únicamente como roadmap en README.
 - D-013 Los íconos PWA se sirven como SVG vectorial con tamaños declarados 192/512 y propósito maskable; evita binarios opacos y no consume optimización de imágenes de Vercel.
 - D-014 QA ejecuta la instalación limpia en un clon temporal fuera de `Documents` porque Windows bloqueó repetidamente directorios de npm con `ENOTEMPTY`/`EPERM`; el clon usa el mismo commit y separa el fallo ambiental del producto.
+- D-015 Los E2E de autenticación y flujos persistentes usan una instancia PGlite local preparada desde la migración real; `E2E_TEST_MODE` y el proveedor Credentials quedan prohibidos cuando existe `VERCEL`, de modo que producción conserva exclusivamente Google y no consume recursos externos durante pruebas.

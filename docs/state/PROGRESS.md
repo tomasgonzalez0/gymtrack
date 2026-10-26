@@ -13,5 +13,6 @@
 | M7 Progreso/Entrenador | completado | 2026-10-25 | Build; health y smoke compilados | Gráficas, historial, dashboard y diagnóstico |
 | M8 PWA/Pulido | completado | 2026-10-25 | `test:all` verde; `npm audit --omit=dev`: 0 | Manifest/SW, responsive, a11y, CSP y headers |
 | C. QA | FAIL (ciclo 1/3) | 2026-10-25 | Instalación limpia temporal; lint/typecheck/39 tests/build/2 E2E verdes; auditoría IDOR, seguridad, costo y exploratorio | 3 S1 + 3 S2 abiertos; ver `QA_REPORT.md`; no desplegar |
+| B. Corrección QA ciclo 1/3 | completado; pendiente revalidación QA | 2026-10-25 | `test:all`: lint, typecheck, 52 unit/integración, build de 30 rutas y 8 E2E PASS; `npm audit --omit=dev`: 0 vulnerabilidades | QA-001…QA-006 corregidos en `c268217`; sin recursos externos ni secretos |
 | D. Despliegue | pendiente | | | |
 | E. Verificación final | pendiente | | | |
